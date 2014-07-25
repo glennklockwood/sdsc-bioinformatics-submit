@@ -1,0 +1,67 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to use samtool's merge on SDSC's Gordon Resource.  
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N samtools-sort
+#PBS -l walltime=18:00:00
+#PBS -l nodes=1:ppn=8:native
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -o samtools-merge-samp1-8.out
+#PBS -j oe
+
+### Define BAMFILES_IN and BAMFILE_OUT for each sample to be run from this 
+### script.  This script will launch every set of inputs in $SAMFILE that you 
+### define below.
+BAMFILES_IN[0]="/oasis/scratch/$USER/temp_project/sample1/sample1_lane1.bam /oasis/scratch/$USER/temp_project/sample1/sample1_lane2.bam /oasis/scratch/$USER/temp_project/sample1/sample1_lane3.bam /oasis/scratch/$USER/temp_project/sample1/sample1_lane4.bam"
+BAMFILE_OUT[0]=/oasis/scratch/$USER/temp_project/sample1/sample1.bam
+
+BAMFILES_IN[1]="/oasis/scratch/$USER/temp_project/sample2/sample2_lane1.bam /oasis/scratch/$USER/temp_project/sample2/sample2_lane2.bam /oasis/scratch/$USER/temp_project/sample2/sample2_lane3.bam /oasis/scratch/$USER/temp_project/sample2/sample2_lane4.bam"
+BAMFILE_OUT[1]=/oasis/scratch/$USER/temp_project/sample2/sample2.bam
+
+BAMFILES_IN[2]="/oasis/scratch/$USER/temp_project/sample3/sample_lane13.bam /oasis/scratch/$USER/temp_project/sample3/sample_lane23.bam /oasis/scratch/$USER/temp_project/sample3/sample_lane33.bam /oasis/scratch/$USER/temp_project/sample3/sample_lane43.ba"
+BAMFILE_OUT[2]=/oasis/scratch/$USER/temp_project/sample3/sample3.bam
+
+BAMFILES_IN[3]="/oasis/scratch/$USER/temp_project/sample4/sample_lane14.bam /oasis/scratch/$USER/temp_project/sample4/sample_lane24.bam /oasis/scratch/$USER/temp_project/sample4/sample_lane34.bam /oasis/scratch/$USER/temp_project/sample4/sample_lane44.ba"
+BAMFILE_OUT[3]=/oasis/scratch/$USER/temp_project/sample4/sample4.bam
+
+BAMFILES_IN[4]="/oasis/scratch/$USER/temp_project/sample5/sample_lane15.bam /oasis/scratch/$USER/temp_project/sample5/sample_lane25.bam /oasis/scratch/$USER/temp_project/sample5/sample_lane35.bam /oasis/scratch/$USER/temp_project/sample5/sample_lane45.ba"
+BAMFILE_OUT[4]=/oasis/scratch/$USER/temp_project/sample5/sample5.bam
+
+BAMFILES_IN[5]="/oasis/scratch/$USER/temp_project/sample6/sample_lane16.bam /oasis/scratch/$USER/temp_project/sample6/sample_lane26.bam /oasis/scratch/$USER/temp_project/sample6/sample_lane36.bam /oasis/scratch/$USER/temp_project/sample6/sample_lane46.ba"
+BAMFILE_OUT[5]=/oasis/scratch/$USER/temp_project/sample6/sample6.bam
+
+BAMFILES_IN[6]="/oasis/scratch/$USER/temp_project/sample7/sample_lane17.bam /oasis/scratch/$USER/temp_project/sample7/sample_lane27.bam /oasis/scratch/$USER/temp_project/sample7/sample_lane37.bam /oasis/scratch/$USER/temp_project/sample7/sample_lane47.ba"
+BAMFILE_OUT[6]=/oasis/scratch/$USER/temp_project/sample7/sample7.bam
+
+BAMFILES_IN[7]="/oasis/scratch/$USER/temp_project/sample8/sample_lane18.bam /oasis/scratch/$USER/temp_project/sample8/sample_lane28.bam /oasis/scratch/$USER/temp_project/sample8/sample_lane38.bam /oasis/scratch/$USER/temp_project/sample8/sample_lane48.ba"
+BAMFILE_OUT[7]=/oasis/scratch/$USER/temp_project/sample8/sample8.bam
+
+BAMFILES_IN[8]="/oasis/scratch/$USER/temp_project/sample9/sample_lane19.bam /oasis/scratch/$USER/temp_project/sample9/sample_lane29.bam /oasis/scratch/$USER/temp_project/sample9/sample_lane39.bam /oasis/scratch/$USER/temp_project/sample9/sample_lane49.ba"
+BAMFILE_OUT[8]=/oasis/scratch/$USER/temp_project/sample9/sample9.bam
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+# Use the header lines from the following sam file for our merged bam
+SAM_HEADER=/oasis/scratch/$USER/temp_project/HEADER.sam
+
+scratch_dir=/scratch/$USER/$PBS_JOBID
+for (( i=0; i<${#BAMFILES_IN[@]}; i++))
+do
+  output_prefix="$scratch_dir/$(/bin/basename ${BAMFILE_IN[i]} .bam)"
+  (/usr/bin/numactl -C +$i \
+    $SAMTOOLSHOME/bin/samtools merge -n -h $SAM_HEADER \
+    ${BAMFILE_OUT[i]} \
+    ${BAMFILES_IN[i]} \
+    $output_prefix && \
+  mv -v ${output_prefix}.bam ${BAMFILE_OUT[i]}) &
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

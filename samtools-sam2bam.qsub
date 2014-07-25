@@ -1,0 +1,58 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to convert .sam to .bam files on SDSC's Gordon Resource.  
+#  Note that this script assumes you have access to the shared queue on Gordon, 
+#  which requires a pre-arranged collaboration with SDSC.  Contact 
+#  help@xsede.org you need guidance converting this script to a job suitable 
+#  for the normal queue.
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N samtools-sam2bam
+#PBS -l walltime=8:00:00
+#PBS -l nodes=1:ppn=8
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -j oe
+#PBS -o samtools-sam2bam-samp1-8.out
+
+### Define SAMFILE and BAMFILE for each sample to be run from this script.
+### This script will launch every set of inputs in $SAMFILE that you define
+### below.
+SAMFILE[0]=/oasis/scratch/$USER/temp_project/sample1/sample1.sam
+BAMFILE[0]=/oasis/scratch/$USER/temp_project/sample1/sample1.bam
+
+SAMFILE[1]=/oasis/scratch/$USER/temp_project/sample2/sample2.sam
+BAMFILE[1]=/oasis/scratch/$USER/temp_project/sample2/sample2.bam
+
+SAMFILE[2]=/oasis/scratch/$USER/temp_project/sample3/sample3.sam
+BAMFILE[2]=/oasis/scratch/$USER/temp_project/sample3/sample3.bam
+
+SAMFILE[3]=/oasis/scratch/$USER/temp_project/sample4/sample4.sam
+BAMFILE[3]=/oasis/scratch/$USER/temp_project/sample4/sample4.bam
+
+SAMFILE[4]=/oasis/scratch/$USER/temp_project/sample5/sample5.sam
+BAMFILE[4]=/oasis/scratch/$USER/temp_project/sample5/sample5.bam
+
+SAMFILE[5]=/oasis/scratch/$USER/temp_project/sample6/sample6.sam
+BAMFILE[5]=/oasis/scratch/$USER/temp_project/sample6/sample6.bam
+
+SAMFILE[6]=/oasis/scratch/$USER/temp_project/sample7/sample7.sam
+BAMFILE[6]=/oasis/scratch/$USER/temp_project/sample7/sample7.bam
+
+SAMFILE[7]=/oasis/scratch/$USER/temp_project/sample8/sample8.sam
+BAMFILE[7]=/oasis/scratch/$USER/temp_project/sample8/sample8.bam
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+for (( i=0; i<${#SAMFILE[@]}; i++))
+do
+  $SAMTOOLSHOME/bin/samtools view ${SAMFILE[i]} -bS -o ${BAMFILE[i]} & 
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

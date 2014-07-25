@@ -1,0 +1,58 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to run Picard's MarkDuplicates on SDSC's Gordon Resource.
+#  Note that this script assumes you have access to the shared queue on Gordon,
+#  which requires a pre-arranged collaboration with SDSC.  Contact 
+#  help@xsede.org if you need guidance converting this script to a job suitable 
+#  for the normal queue.
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N picard-markdups
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=8:native:flash
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -o picard-markdups-samp1-8.out
+#PBS -j oe
+
+### Define BAMFILE_IN, BAMFILE_OUT, and METRIC for each sample to be run from 
+### this script.  This script will launch every set of inputs in $BAMFILE_IN 
+### that you enter below.
+
+BAMFILE_IN[0]=/oasis/scratch/$USER/temp_project/sample1/sample1.bam
+BAMFILE_OUT[0]=/oasis/scratch/$USER/temp_project/sample1/sample1_md.bam
+METRIC[0]=/oasis/scratch/$USER/temp_project/sample1/sample1_md.metric
+
+BAMFILE_IN[1]=/oasis/scratch/$USER/temp_project/sample2/sample2.bam
+BAMFILE_OUT[1]=/oasis/scratch/$USER/temp_project/sample2/sample2_md.bam
+METRIC[1]=/oasis/scratch/$USER/temp_project/sample2/sample2_md.metric
+
+BAMFILE_IN[2]=/oasis/scratch/$USER/temp_project/sample3/sample3.bam
+BAMFILE_OUT[2]=/oasis/scratch/$USER/temp_project/sample3/sample3_md.bam
+METRIC[2]=/oasis/scratch/$USER/temp_project/sample3/sample3_md.metric
+
+BAMFILE_IN[3]=/oasis/scratch/$USER/temp_project/sample4/sample4.bam
+BAMFILE_OUT[3]=/oasis/scratch/$USER/temp_project/sample4/sample4_md.bam
+METRIC[3]=/oasis/scratch/$USER/temp_project/sample4/sample4_md.metric
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+for (( i=0; i<${#BAMFILE_IN[@]}; i++))
+do
+  mkdir -p /scratch/$USER/$PBS_JOBID/$i
+  /usr/java/latest/bin/java -Xmx5g \
+    -jar $PICARDHOME/picard-tools/MarkDuplicates.jar \
+    I=${BAMFILE_IN[i]} \
+    O=${BAMFILE_OUT[i]} \
+    M=${METRIC[i]} \
+    CREATE_INDEX=true ASSUME_SORTED=true \
+    TMP_DIR=/scratch/$USER/$PBS_JOBID/$i & 
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

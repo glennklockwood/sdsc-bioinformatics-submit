@@ -1,0 +1,84 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to use samtool's sort on SDSC's Gordon Resource.  
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N samtools-sort
+#PBS -l walltime=18:00:00
+#PBS -l nodes=1:ppn=16:native:bigflash
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -o samtools-sort-samp1-16.out
+#PBS -j oe
+
+### Define BAMFILE_IN and BAMFILE_OUT for each sample to be run from this 
+### script.  This script will launch every set of inputs in $SAMFILE that you 
+### define below.
+BAMFILE_IN[0]=/oasis/scratch/$USER/temp_project/sample1/sample1.bam
+BAMFILE_OUT[0]=/oasis/scratch/$USER/temp_project/sample1/sample1_sorted.bam
+
+BAMFILE_IN[1]=/oasis/scratch/$USER/temp_project/sample2/sample2.bam
+BAMFILE_OUT[1]=/oasis/scratch/$USER/temp_project/sample2/sample2_sorted.bam
+
+BAMFILE_IN[2]=/oasis/scratch/$USER/temp_project/sample3/sample3.bam
+BAMFILE_OUT[2]=/oasis/scratch/$USER/temp_project/sample3/sample3_sorted.bam
+
+BAMFILE_IN[3]=/oasis/scratch/$USER/temp_project/sample4/sample4.bam
+BAMFILE_OUT[3]=/oasis/scratch/$USER/temp_project/sample4/sample4_sorted.bam
+
+BAMFILE_IN[4]=/oasis/scratch/$USER/temp_project/sample5/sample5.bam
+BAMFILE_OUT[4]=/oasis/scratch/$USER/temp_project/sample5/sample5_sorted.bam
+
+BAMFILE_IN[5]=/oasis/scratch/$USER/temp_project/sample6/sample6.bam
+BAMFILE_OUT[5]=/oasis/scratch/$USER/temp_project/sample6/sample6_sorted.bam
+
+BAMFILE_IN[6]=/oasis/scratch/$USER/temp_project/sample7/sample7.bam
+BAMFILE_OUT[6]=/oasis/scratch/$USER/temp_project/sample7/sample7_sorted.bam
+
+BAMFILE_IN[7]=/oasis/scratch/$USER/temp_project/sample8/sample8.bam
+BAMFILE_OUT[7]=/oasis/scratch/$USER/temp_project/sample8/sample8_sorted.bam
+
+BAMFILE_IN[8]=/oasis/scratch/$USER/temp_project/sample9/sample9.bam
+BAMFILE_OUT[8]=/oasis/scratch/$USER/temp_project/sample9/sample9_sorted.bam
+
+BAMFILE_IN[9]=/oasis/scratch/$USER/temp_project/sample10/sample10.bam
+BAMFILE_OUT[9]=/oasis/scratch/$USER/temp_project/sample10/sample10_sorted.bam
+
+BAMFILE_IN[10]=/oasis/scratch/$USER/temp_project/sample11/sample11.bam
+BAMFILE_OUT[10]=/oasis/scratch/$USER/temp_project/sample11/sample11_sorted.bam
+
+BAMFILE_IN[11]=/oasis/scratch/$USER/temp_project/sample12/sample12.bam
+BAMFILE_OUT[11]=/oasis/scratch/$USER/temp_project/sample12/sample12_sorted.bam
+
+BAMFILE_IN[12]=/oasis/scratch/$USER/temp_project/sample13/sample13.bam
+BAMFILE_OUT[12]=/oasis/scratch/$USER/temp_project/sample13/sample13_sorted.bam
+
+BAMFILE_IN[13]=/oasis/scratch/$USER/temp_project/sample14/sample14.bam
+BAMFILE_OUT[13]=/oasis/scratch/$USER/temp_project/sample14/sample14_sorted.bam
+
+BAMFILE_IN[14]=/oasis/scratch/$USER/temp_project/sample15/sample15.bam
+BAMFILE_OUT[14]=/oasis/scratch/$USER/temp_project/sample15/sample15_sorted.bam
+
+BAMFILE_IN[15]=/oasis/scratch/$USER/temp_project/sample16/sample16.bam
+BAMFILE_OUT[15]=/oasis/scratch/$USER/temp_project/sample16/sample16_sorted.bam
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+scratch_dir=/scratch/$USER/$PBS_JOBID
+for (( i=0; i<${#BAMFILE_IN[@]}; i++))
+do
+  output_prefix="$scratch_dir/$(/bin/basename ${BAMFILE_IN[i]} .bam)"
+  (/usr/bin/numactl -C +$i \
+    $SAMTOOLSHOME/bin/samtools sort \
+    ${BAMFILE_IN[i]} \
+    $output_prefix && \
+  mv -v ${output_prefix}.bam ${BAMFILE_OUT[i]}) &
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

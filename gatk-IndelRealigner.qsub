@@ -1,0 +1,60 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to run GATK's IndelRealigner on SDSC's Gordon Resource.
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N gatk-indelrealigner
+#PBS -l walltime=20:00:00
+#PBS -l nodes=1:ppn=16:native:flash
+#PBS -q normal
+#PBS -m abe
+#PBS -j oe
+#PBS -o gatk-indelrealigner-samp1-5.out
+
+REF_DIR="/oasis/projects/nsf/abc123/$USER/reference"
+
+### Define BAMFILE_IN, INTERVALS, and BAMFILE_OUT for each sample to be run
+### from this script.  This script will launch every set of inputs in 
+### $BAMFILE_IN that you define below.
+BAMFILE_IN[0]="/oasis/projects/nsf/abc123/$USER/sample1/sample1.bam"
+INTERVALS[0]="/oasis/projects/nsf/abc123/$USER/sample1/sample1.intervals"
+BAMFILE_OUT[0]="/oasis/projects/nsf/abc123/$USER/sample1/sample1_realign.bam"
+
+BAMFILE_IN[1]="/oasis/projects/nsf/abc123/$USER/sample2/sample2.bam"
+INTERVALS[1]="/oasis/projects/nsf/abc123/$USER/sample2/sample2.intervals"
+BAMFILE_OUT[1]="/oasis/projects/nsf/abc123/$USER/sample2/sample2_realign.bam"
+
+BAMFILE_IN[2]="/oasis/projects/nsf/abc123/$USER/sample3/sample3.bam"
+INTERVALS[2]="/oasis/projects/nsf/abc123/$USER/sample3/sample3.intervals"
+BAMFILE_OUT[2]="/oasis/projects/nsf/abc123/$USER/sample3/sample3_realign.bam"
+
+BAMFILE_IN[3]="/oasis/projects/nsf/abc123/$USER/sample4/sample4.bam"
+INTERVALS[3]="/oasis/projects/nsf/abc123/$USER/sample4/sample4.intervals"
+BAMFILE_OUT[3]="/oasis/projects/nsf/abc123/$USER/sample4/sample4_realign.bam"
+
+BAMFILE_IN[4]="/oasis/projects/nsf/abc123/$USER/sample5/sample5.bam"
+INTERVALS[4]="/oasis/projects/nsf/abc123/$USER/sample5/sample5.intervals"
+BAMFILE_OUT[4]="/oasis/projects/nsf/abc123/$USER/sample5/sample5_realign.bam"
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+for (( i=0; i<${#BAMFILE_IN[@]}; i++))
+do
+  /usr/java/latest/bin/java -Xmx12g \
+    -Djava.io.tmpdir=/scratch/$USER/$PBS_JOBID \
+    -jar $GATKHOME/GenomeAnalysisTK.jar \
+    -T IndelRealigner \
+    -R $REF_DIR/hg19.fa \
+    -I ${BAMFILE_IN[i]} \
+    -targetIntervals ${INTERVALS[i]} \
+    -o ${BAMFILE_OUT[i]} \
+    -known $REF_DIR/Mills_and_1000G_gold_standard.indels.b37.vcf \
+    -fixMisencodedQuals & 
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

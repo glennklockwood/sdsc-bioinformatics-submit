@@ -1,0 +1,56 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to run GATK's Realigner Target Creator on SDSC's Gordon 
+#  Resource.  Note that this script assumes you have access to the shared queue
+#  on Gordon, which requires a pre-arranged collaboration with SDSC.  Contact 
+#  help@xsede.org if you need guidance converting this script to a job suitable 
+#  for the normal queue.
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N gatk-targetcreator
+#PBS -l walltime=20:00:00
+#PBS -l nodes=1:ppn=8:native:flash
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -j oe
+#PBS -o gatk-targetcreator-samp1-4.out
+
+REF_DIR="/oasis/projects/nsf/abc123/$USER/reference"
+
+### Define BAMFILE_IN and INTERVALS for each sample to be run from this script.
+### This script will launch every set of inputs in $BAMFILE_IN that you enter
+### below.
+BAMFILE_IN[0]="/oasis/projects/nsf/abc123/$USER/sample1/sample1.bam"
+INTERVALS[0]="/oasis/projects/nsf/abc123/$USER/sample1/sample1.intervals"
+
+BAMFILE_IN[1]="/oasis/projects/nsf/abc123/$USER/sample2/sample2.bam"
+INTERVALS[1]="/oasis/projects/nsf/abc123/$USER/sample2/sample2.intervals"
+
+BAMFILE_IN[2]="/oasis/projects/nsf/abc123/$USER/sample3/sample3.bam"
+INTERVALS[2]="/oasis/projects/nsf/abc123/$USER/sample3/sample3.intervals"
+
+BAMFILE_IN[3]="/oasis/projects/nsf/abc123/$USER/sample4/sample4.bam"
+INTERVALS[3]="/oasis/projects/nsf/abc123/$USER/sample4/sample4.intervals"
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+for (( i=0; i<${#BAMFILE_IN[@]}; i++))
+do
+  /usr/java/latest/bin/java -Xmx5g \
+    -Djava.io.tmpdir=/scratch/$USER/$PBS_JOBID \
+    -jar $GATKHOME/GenomeAnalysisTK.jar \
+    -T RealignerTargetCreator \
+    -R $REF_DIR/hg19.fa \
+    -I ${BAMFILE_IN[i]} \
+    -o ${INTERVALS[i]} \
+    -known $REF_DIR/Mills_and_1000G_gold_standard.indels.b37.vcf \
+    -fixMisencodedQuals & 
+done
+
+wait
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources

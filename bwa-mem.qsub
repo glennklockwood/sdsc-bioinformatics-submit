@@ -1,0 +1,31 @@
+#!/bin/bash
+################################################################################
+#  Sample job script to run the BWA aligner on SDSC's Gordon Resource.  Note 
+#  that this script assumes you have access to the shared queue on Gordon, which
+#  requires a pre-arranged collaboration with SDSC.  Contact help@xsede.org if
+#  you need guidance converting this script to a job suitable for the normal
+#  queue.
+#
+#  Glenn K. Lockwood, San Diego Supercomputer Center             January 2014
+################################################################################
+#PBS -N bwa-mem
+#PBS -l walltime=12:00:00
+#PBS -l nodes=1:ppn=8:native
+#PBS -q shared
+#PBS -v QOS=10
+#PBS -m abe
+#PBS -j oe
+#PBS -o bwa-mem-samp1.out
+
+BASE_DIR="/oasis/projects/nsf/abc123/$USER/sample1"
+REF_DIR="/oasis/projects/nsf/abc123/$USER/reference"
+GROUP_HEADER="@RG\tID:ga\tSM:hs\tLB:ga\tPL:Illumina\n@RG\tID:454\tSM:hs\tLB:454\tPL:454"
+
+module load biotools
+
+cd $PBS_O_WORKDIR
+
+$BWAHOME/bin/bwa mem -t 8 -M -R "$GROUP_HEADER" $REF_DIR/hg19.fa \
+    $BASE_DIR/read1.fq.gz $BASE_DIR/read2.fq.gz - > $BASE_DIR/sample1.sam
+
+/opt/torque/bin/qstat -f $PBS_JOBID | /bin/grep -e Job -e resources
